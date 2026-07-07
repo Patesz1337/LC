@@ -8,10 +8,35 @@
 <style>
 a       { color:#00FF00; text-decoration:none; }
 a:hover { color:#FFFFFF; text-decoration:underline; }
+.search-wrap {
+  border: 1px solid #880000;
+  padding: 10px 16px;
+  margin: 12px auto;
+  max-width: 400px;
+  text-align: center;
+}
+.search-wrap label { color:#00FF00; font-size:13px; font-family:Arial,sans-serif; }
+.search-wrap input[type=number] {
+  background:#000; border:1px solid #880000; color:#00FF00;
+  font-size:16px; padding:5px 10px; width:100px; text-align:center; margin:0 8px;
+}
+.search-wrap button {
+  background:#000; border:1px solid #880000; color:#00FF00;
+  font-size:13px; padding:5px 18px; cursor:pointer; margin-left:6px;
+}
+.search-wrap button:hover { background:#1a0000; }
 </style>
 </head>
 <body>
   <p align="center"><img src="xlarkinorcenter.jpg" border="0"></p>
+<div class="search-wrap">
+  <label>Szint szerinti keresés:
+    <input type="number" id="szintkereso_input" min="0" max="201" placeholder="pl. 100">
+  </label>
+  <button onclick="szintKereso()">Keresés</button>
+  <button onclick="szintKeresoTorol()">Összes</button>
+</div>
+
   <table class="eredmeny"><tbody>
   <tr>
     <th class="eredmenyfejlec">Név</th>
@@ -2230,6 +2255,35 @@ a:hover { color:#FFFFFF; text-decoration:underline; }
   btn.innerHTML = '<a href="' + window.location.pathname + '" style="color:#888;font-size:12px;">&#9654; Mutasd az összeset</a>';
   tr.closest('table').insertAdjacentElement('beforebegin', btn);
 })();
+</script>
+
+
+<script>
+function szintKereso() {
+  var input = document.getElementById('szintkereso_input');
+  var szint = input.value.trim();
+  var rows = document.querySelectorAll('table.eredmeny tbody tr');
+  rows.forEach(function(row) {
+    if (row.querySelector('th')) { row.style.display = ''; return; }
+    if (szint === '') { row.style.display = ''; return; }
+    var cells = row.querySelectorAll('td');
+    if (cells.length < 2) { row.style.display = 'none'; return; }
+    var rowSzint = cells[1].textContent.trim();
+    row.style.display = (rowSzint === szint) ? '' : 'none';
+  });
+}
+function szintKeresoTorol() {
+  document.getElementById('szintkereso_input').value = '';
+  szintKereso();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var inp = document.getElementById('szintkereso_input');
+  if (inp) {
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') szintKereso();
+    });
+  }
+});
 </script>
 
 </body></html>
