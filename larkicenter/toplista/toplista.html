@@ -116,6 +116,7 @@ const OSZLOPOK = [
   { key:'fszb',     label:'Ütő-zúzó fegyverszaki' },
   { key:'fszc',     label:'Távolsági fegyverszaki' },
   { key:'magia',    label:'Mágia' },
+  { key:'pluszmagia', label:'Plusz mágia' },
   { key:'rablas',   label:'Rablás' },
   { key:'lopas',    label:'Lopás' },
   { key:'zsebeles', label:'Zsebelés' },
@@ -159,6 +160,10 @@ let aktivOldal = 0;
 let searchTerm = '';
 
 function fmt(n){ return n===null||n===undefined ? '—' : n.toLocaleString('hu-HU'); }
+function fmtStat(key, n){
+  if(key==='pluszmagia' && n!==null && n!==undefined) return (n>0?'+':'') + n.toLocaleString('hu-HU');
+  return fmt(n);
+}
 
 function renderStatValaszto(){
   const sel = document.getElementById('statvalaszto');
@@ -180,7 +185,8 @@ function renderOldalValaszto(osszesDb){
 function renderThead(){
   const row = document.getElementById('thead-row');
   const label = OSZLOPOK.find(c=>c.key===aktivStat).label;
-  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th><th>Tapasztalati szint</th>`;
+  const extra = aktivStat==='pluszmagia' ? '<th>Mágia</th>' : '';
+  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th>${extra}<th>Tapasztalati szint</th>`;
 }
 
 function render(){
@@ -205,7 +211,8 @@ function render(){
     <tr>
       <td>${aktivOldal*OLDALMERET + i + 1}</td>
       <td><a href="${KARLAP_URL}${iso88592Encode(r.nev)}" target="_blank" rel="noopener">${r.nev}</a></td>
-      <td>${fmt(r[aktivStat])}</td>
+      <td>${fmtStat(aktivStat, r[aktivStat])}</td>
+      ${aktivStat==='pluszmagia' ? `<td>${fmt(r.magia)}</td>` : ''}
       <td>${fmt(r.szint)}</td>
     </tr>
   `).join('');
@@ -223,6 +230,10 @@ fetch('data.json')
   .then(r => r.json())
   .then(data => {
     ADAT = data;
+    // Plusz mágia = mágia - tapasztalati szint
+    ADAT.forEach(r => {
+      r.pluszmagia = (r.magia!==null && r.magia!==undefined && r.szint!==null && r.szint!==undefined) ? r.magia - r.szint : null;
+    });
     document.getElementById('db-szoveg').textContent = ADAT.length;
     document.getElementById('frissitve-label').textContent = 'Adat betöltve: data.json';
     render();
