@@ -67,17 +67,21 @@
 
   .count{text-align:center;font-size:12px;color:#666;margin:0 0 20px;}
 
+  footer{
+    margin-top:30px;
+    font-size:12px;
+    color:#777;
+    border-top:1px solid #ccc;
+    padding-top:10px;
+    text-align:center;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Larkinor Toplista</h1>
-  <p class="meta">Saját gyűjtés élő karakterlapokból — a hivatalos toplista nem frissül 2025 óta. <b id="db-szoveg"></b></p>
-  <br>
-    <div class="form-row">
-    <a href="mailto:patesz1337@gmail.com"><b>Amennyiben nem találod a karaktered írj és beteszem :)</b><br></a>
-  </div>
-  <br>
+  <p class="meta">Saját gyűjtés élő karakterlapokból — a hivatalos toplista nem frissül 2025 óta. <b id="db-szoveg">–</b> karakter.</p>
+
   <div class="form-row">
     <b>Melyik toplista érdekel:</b><br>
     <select id="statvalaszto"></select>
@@ -94,40 +98,44 @@
     <tbody id="tbody"></tbody>
   </table>
   <div class="count" id="count"></div>
+
+  <footer>Larkinor Toplista · saját gyűjtés</footer>
 </div>
 
 <script>
 // Toplista oszlopok: kulcs a data.json-beli mezőnév, label a megjelenő név
 const OSZLOPOK = [
-  { key:'szint',    label:'Tapasztalati szint' },
-  { key:'ero',      label:'Erő' },
-  { key:'iq',       label:'IQ' },
-  { key:'ugyesseg', label:'Ügyesség' },
-  { key:'kitartas', label:'Kitartás' },
-  { key:'szerencse',label:'Szerencse' },
-  { key:'gyorsasag',label:'Gyorsaság' },
-  { key:'elet',     label:'Életpont' },
-  { key:'varazs',   label:'Varázspont' },
-  { key:'bank',     label:'Pénz bankban' },
-  { key:'piac',     label:'Pénz piacon' },
-  { key:'katt',     label:'Klikkszám' },
-  { key:'tpkatt',   label:'Tp/Katt' },
-  { key:'fsza',     label:'Szúró-vágó fegyverszaki' },
-  { key:'fszb',     label:'Ütő-zúzó fegyverszaki' },
-  { key:'fszc',     label:'Távolsági fegyverszaki' },
-  { key:'magia',    label:'Mágia' },
-  { key:'pluszmagia', label:'Plusz mágia' },
-  { key:'rablas',   label:'Rablás' },
-  { key:'lopas',    label:'Lopás' },
-  { key:'zsebeles', label:'Zsebelés' },
-  { key:'kuldi',    label:'Teljesített küldetés' },
-  { key:'kovacs',   label:'Kovácsolás' },
-  { key:'monszt',   label:'Monsztalogia' },
-  { key:'hnp',      label:'Hírnév-pont' },
-  { key:'irtas',    label:'Démonirtás' },
-  { key:'toltes',   label:'Szigettöltés' },
-  { key:'epitok',   label:'Legnagyobb építők' },
-  { key:'hoditok',  label:'Legnagyobb hódítók' },
+  { key:'szint',    	label:'Tapasztalati szint' },
+  { key:'ero',      	label:'Erő' },
+  { key:'iq',       	label:'IQ' },
+  { key:'ugyesseg', 	label:'Ügyesség' },
+  { key:'kitartas', 	label:'Kitartás' },
+  { key:'szerencse',	label:'Szerencse' },
+  { key:'gyorsasag',	label:'Gyorsaság' },
+  { key:'elet',     	label:'Életpont' },
+  { key:'varazs',   	label:'Varázspont' },
+  { key:'bank',     	label:'Pénz bankban' },
+  { key:'piac',     	label:'Pénz piacon' },
+  { key:'katt',     	label:'Klikkszám' },
+  { key:'tpkatt',   	label:'Tp/Katt' },
+  { key:'fsza',     	label:'Szúró-vágó fegyverszaki' },
+  { key:'fszb',     	label:'Ütő-zúzó fegyverszaki' },
+  { key:'fszc',     	label:'Távolsági fegyverszaki' },
+  { key:'magia',    	label:'Mágia' },
+  { key:'rablas',   	label:'Rablás' },
+  { key:'lopas',    	label:'Lopás' },
+  { key:'zsebeles', 	label:'Zsebelés' },
+  { key:'kuldi',    	label:'Teljesített küldetés' },
+  { key:'kovacs',   	label:'Kovácsolás' },
+  { key:'monszt',   	label:'Monsztalogia' },
+  { key:'hnp',      	label:'Hírnév-pont' },
+  { key:'irtas',    	label:'Démonirtás' },
+  { key:'toltes',   	label:'Szigettöltés' },
+  { key:'epitok',   	label:'Legnagyobb építők' },
+  { key:'hoditok',  	label:'Legnagyobb hódítók' },
+  { key:'katt_tarolo', 	label:'Kattintás tárolóban' },
+  { key:'eklikk',      	label:'Eljátszható klikk' },
+  { key:'szornyek',    	label:'Megismert szörnyek száma' },
 ];
 const OLDALMERET = 100;
 const KARLAP_URL = 'https://l1.larkinor.hu/cgi-bin/larkinor?oldalTipus=otKarakterlap&melyik=';
@@ -160,10 +168,7 @@ let aktivOldal = 0;
 let searchTerm = '';
 
 function fmt(n){ return n===null||n===undefined ? '—' : n.toLocaleString('hu-HU'); }
-function fmtStat(key, n){
-  if(key==='pluszmagia' && n!==null && n!==undefined) return (n>0?'+':'') + n.toLocaleString('hu-HU');
-  return fmt(n);
-}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function renderStatValaszto(){
   const sel = document.getElementById('statvalaszto');
@@ -185,20 +190,24 @@ function renderOldalValaszto(osszesDb){
 function renderThead(){
   const row = document.getElementById('thead-row');
   const label = OSZLOPOK.find(c=>c.key===aktivStat).label;
-  const extra = aktivStat==='pluszmagia' ? '<th>Mágia</th>' : '';
-  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th>${extra}<th>Tapasztalati szint</th>`;
+  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th><th>Tapasztalati szint</th>`;
 }
 
 function render(){
   renderStatValaszto();
   renderThead();
 
-  let sorted = ADAT.filter(r => r[aktivStat] !== null && r[aktivStat] !== undefined);
+  // rendezés + helyezés a teljes listán (holtversenyben azonos helyezés), a keresés csak utána szűr
+  let sorted = ADAT.filter(r => r[aktivStat] !== null && r[aktivStat] !== undefined)
+    .sort((a,b) => (b[aktivStat]-a[aktivStat]) || a.nev.localeCompare(b.nev, 'hu'))
+    .map((r,i,arr) => ({ r, hely: 0, i }));
+  for (let i=0;i<sorted.length;i++){
+    sorted[i].hely = (i>0 && sorted[i].r[aktivStat]===sorted[i-1].r[aktivStat]) ? sorted[i-1].hely : i+1;
+  }
   if(searchTerm){
     const s = searchTerm.toLowerCase();
-    sorted = sorted.filter(r => r.nev.toLowerCase().includes(s));
+    sorted = sorted.filter(x => x.r.nev.toLowerCase().includes(s));
   }
-  sorted.sort((a,b) => b[aktivStat]-a[aktivStat]);
 
   renderOldalValaszto(sorted.length);
   const oldal = sorted.slice(aktivOldal*OLDALMERET, (aktivOldal+1)*OLDALMERET);
@@ -207,12 +216,11 @@ function render(){
   document.getElementById('cim-szoveg').textContent = label + ' toplista';
 
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML = oldal.map((r,i) => `
+  tbody.innerHTML = oldal.map(({r, hely}) => `
     <tr>
-      <td>${aktivOldal*OLDALMERET + i + 1}</td>
-      <td><a href="${KARLAP_URL}${iso88592Encode(r.nev)}" target="_blank" rel="noopener">${r.nev}</a></td>
-      <td>${fmtStat(aktivStat, r[aktivStat])}</td>
-      ${aktivStat==='pluszmagia' ? `<td>${fmt(r.magia)}</td>` : ''}
+      <td>${hely}</td>
+      <td><a href="${KARLAP_URL}${iso88592Encode(r.nev)}" target="_blank" rel="noopener">${esc(r.nev)}</a></td>
+      <td>${fmt(r[aktivStat])}</td>
       <td>${fmt(r.szint)}</td>
     </tr>
   `).join('');
@@ -230,10 +238,6 @@ fetch('data.json')
   .then(r => r.json())
   .then(data => {
     ADAT = data;
-    // Plusz mágia = mágia - tapasztalati szint
-    ADAT.forEach(r => {
-      r.pluszmagia = (r.magia!==null && r.magia!==undefined && r.szint!==null && r.szint!==undefined) ? r.magia - r.szint : null;
-    });
     document.getElementById('db-szoveg').textContent = ADAT.length;
     document.getElementById('frissitve-label').textContent = 'Adat betöltve: data.json';
     render();
