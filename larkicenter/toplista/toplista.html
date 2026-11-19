@@ -197,7 +197,7 @@ function render(){
   renderStatValaszto();
   renderThead();
 
-  // rendezés + helyezés a teljes listán (holtversenyben azonos helyezés), a keresés csak utána szűr
+  // rendezés + helyezés a teljes listán (folyamatos sorszám, holtversenyben is), a keresés csak utána szűr
   let sorted = ADAT.filter(r => r[aktivStat] !== null && r[aktivStat] !== undefined)
     .sort((a,b) => (b[aktivStat]-a[aktivStat])
       // Plusz Mágiánál holtversenyben az alacsonyabb szintű van elöl (mint a régi toplistán)
@@ -205,7 +205,7 @@ function render(){
       || a.nev.localeCompare(b.nev, 'hu'))
     .map((r,i,arr) => ({ r, hely: 0, i }));
   for (let i=0;i<sorted.length;i++){
-    sorted[i].hely = (i>0 && sorted[i].r[aktivStat]===sorted[i-1].r[aktivStat]) ? sorted[i-1].hely : i+1;
+    sorted[i].hely = i+1;
   }
   if(searchTerm){
     const s = searchTerm.toLowerCase();
