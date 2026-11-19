@@ -122,6 +122,7 @@ const OSZLOPOK = [
   { key:'fszb',     	label:'Ütő-zúzó fegyverszaki' },
   { key:'fszc',     	label:'Távolsági fegyverszaki' },
   { key:'magia',    	label:'Mágia' },
+  { key:'plusz_magia',	label:'Plusz Mágia' },   // számolt: mágia - tapasztalati szint
   { key:'rablas',   	label:'Rablás' },
   { key:'lopas',    	label:'Lopás' },
   { key:'zsebeles', 	label:'Zsebelés' },
@@ -134,7 +135,6 @@ const OSZLOPOK = [
   { key:'epitok',   	label:'Legnagyobb építők' },
   { key:'hoditok',  	label:'Legnagyobb hódítók' },
   { key:'katt_tarolo', 	label:'Kattintás tárolóban' },
-  { key:'eklikk',      	label:'Eljátszható klikk' },
   { key:'szornyek',    	label:'Megismert szörnyek száma' },
 ];
 const OLDALMERET = 100;
@@ -199,7 +199,10 @@ function render(){
 
   // rendezés + helyezés a teljes listán (holtversenyben azonos helyezés), a keresés csak utána szűr
   let sorted = ADAT.filter(r => r[aktivStat] !== null && r[aktivStat] !== undefined)
-    .sort((a,b) => (b[aktivStat]-a[aktivStat]) || a.nev.localeCompare(b.nev, 'hu'))
+    .sort((a,b) => (b[aktivStat]-a[aktivStat])
+      // Plusz Mágiánál holtversenyben az alacsonyabb szintű van elöl (mint a régi toplistán)
+      || (aktivStat==='plusz_magia' ? (a.szint-b.szint) : 0)
+      || a.nev.localeCompare(b.nev, 'hu'))
     .map((r,i,arr) => ({ r, hely: 0, i }));
   for (let i=0;i<sorted.length;i++){
     sorted[i].hely = (i>0 && sorted[i].r[aktivStat]===sorted[i-1].r[aktivStat]) ? sorted[i-1].hely : i+1;
@@ -237,9 +240,18 @@ document.getElementById('search').addEventListener('input', (e) => {
 fetch('data.json')
   .then(r => r.json())
   .then(data => {
-    ADAT = data;
+    // új formátum: { frissitve_tol, frissitve_ig, karakterek:[...] }; régi: sima tömb
+    ADAT = Array.isArray(data) ? data : (data.karakterek || []);
+    // Plusz Mágia: nincs a karilapon, mágia és tapasztalati szint különbségéből számoljuk
+    for (const r of ADAT) {
+      r.plusz_magia = (typeof r.magia === 'number' && typeof r.szint === 'number') ? r.magia - r.szint : null;
+    }
     document.getElementById('db-szoveg').textContent = ADAT.length;
-    document.getElementById('frissitve-label').textContent = 'Adat betöltve: data.json';
+    const d = x => new Date(x).toLocaleString('hu-HU', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('frissitve-label').textContent =
+      (!Array.isArray(data) && data.frissitve_ig)
+        ? `Frissítve: ${d(data.frissitve_ig)} (adatgyűjtés: ${d(data.frissitve_tol)} – ${d(data.frissitve_ig)})`
+        : 'Frissítés ideje: ismeretlen';
     render();
   })
   .catch(err => {
