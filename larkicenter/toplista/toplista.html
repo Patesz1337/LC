@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <h1>Larkinor Toplista</h1>
-  <p class="meta">Saját gyűjtés élő karakterlapokból — a hivatalos toplista nem frissül 2025 óta. <b id="db-szoveg">–</b> karakter.</p>
+  <p class="meta">Saját gyűjtés élő karakterlapokból — a hivatalos toplista nem frissül 2025 óta.</p>
 
   <div class="form-row">
     <b>Melyik toplista érdekel:</b><br>
@@ -97,7 +97,6 @@
     <thead><tr id="thead-row"></tr></thead>
     <tbody id="tbody"></tbody>
   </table>
-  <div class="count" id="count"></div>
 
   <footer>Larkinor Toplista · saját gyűjtés</footer>
 </div>
@@ -190,7 +189,9 @@ function renderOldalValaszto(osszesDb){
 function renderThead(){
   const row = document.getElementById('thead-row');
   const label = OSZLOPOK.find(c=>c.key===aktivStat).label;
-  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th><th>Tapasztalati szint</th>`;
+  // Tapasztalati szint listán a 4. oszlop a +TP (a régi toplista szerint)
+  const negyedik = aktivStat==='szint' ? '+TP' : 'Tapasztalati szint';
+  row.innerHTML = `<th>Helyezés</th><th>Név</th><th>${label}</th><th>${negyedik}</th>`;
 }
 
 function render(){
@@ -202,6 +203,8 @@ function render(){
     .sort((a,b) => (b[aktivStat]-a[aktivStat])
       // Plusz Mágiánál holtversenyben az alacsonyabb szintű van elöl (mint a régi toplistán)
       || (aktivStat==='plusz_magia' ? (a.szint-b.szint) : 0)
+      // Tapasztalati szintnél holtversenyben a nagyobb TP van elöl (hiányzó TP a végére)
+      || (aktivStat==='szint' ? ((b.tp ?? -1) - (a.tp ?? -1)) : 0)
       || a.nev.localeCompare(b.nev, 'hu'))
     .map((r,i,arr) => ({ r, hely: 0, i }));
   for (let i=0;i<sorted.length;i++){
@@ -224,11 +227,10 @@ function render(){
       <td>${hely}</td>
       <td><a href="${KARLAP_URL}${iso88592Encode(r.nev)}" target="_blank" rel="noopener">${esc(r.nev)}</a></td>
       <td>${fmt(r[aktivStat])}</td>
-      <td>${fmt(r.szint)}</td>
+      <td>${fmt(aktivStat==='szint' ? r.tp : r.szint)}</td>
     </tr>
   `).join('');
 
-  document.getElementById('count').textContent = `${sorted.length} karakter ezen a listán`;
 }
 
 document.getElementById('search').addEventListener('input', (e) => {
@@ -246,11 +248,10 @@ fetch('data.json')
     for (const r of ADAT) {
       r.plusz_magia = (typeof r.magia === 'number' && typeof r.szint === 'number') ? r.magia - r.szint : null;
     }
-    document.getElementById('db-szoveg').textContent = ADAT.length;
     const d = x => new Date(x).toLocaleString('hu-HU', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     document.getElementById('frissitve-label').textContent =
       (!Array.isArray(data) && data.frissitve_ig)
-        ? `Frissítve: ${d(data.frissitve_ig)} (adatgyűjtés: ${d(data.frissitve_tol)} – ${d(data.frissitve_ig)})`
+        ? `Frissítve: ${d(data.frissitve_ig)}`
         : 'Frissítés ideje: ismeretlen';
     render();
   })
